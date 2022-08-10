@@ -1,0 +1,85 @@
+<div class="row">
+  <div class="col-auto">
+    <h1 class="d-inline-block">
+      {{ table.verbose_name_plural }}
+    </h1>
+  </div>
+  <div class="col-auto">
+    <button type="button" class="btn btn-link mb-2" hx-get="{{ create_url }}" hx-swap="none">
+      <i class="fa-solid fa-plus fa-2x"></i>{{ create_url }}fas
+    </button>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12 table-responsive">
+    <table id="{{ table.table_id|safe }}" class="{{ table.table_classes|safe }}" style="{{ table.styles|safe }}">
+        <thead>
+            <tr>
+              {% for column in table.columns %}
+                <th>{{ column }}</th>
+              {% endfor %}
+              {% if table.row_actions %}
+                <th></th>
+              {% endif %}
+            </tr>
+        </thead>
+        {% if not table.ajax_url %}
+          <tbody>
+            {% for row in table.rows %}
+              <tr>
+                {% for cell in row.cells %}
+                  <td>
+                    {{ cell }}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        {% endif %}
+        {% if table.show_footer %}
+          <tfoot>
+              <tr>
+                {% for column in table.columns %}
+                  <th>{{ column }}</th>
+                {% endfor %}
+                {% if table.row_actions %}
+                  <th></th>
+                {% endif %}
+              </tr>
+          </tfoot>
+        {% endif %}
+    </table>
+    <script>
+    	$(document).ready( function () {
+    		var table = $('#{{ table.table_id|safe }}').DataTable({
+    			responsive: true,
+    			"autoWidth": false,
+    			"language": {
+    	            "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/German.json"
+    	        },
+    
+    			{% if table.row_actions %}
+                columnDefs: [
+                	{ orderable: false, targets: -1 }
+                ],
+    			{% endif %}
+    
+    			{% if table.ajax_url %}
+      	        serverSide: true,
+    			ajax: {
+      				url: '{{ table.ajax_url }}',
+      				dataSrc: 'data',
+    			},
+    			{% endif %}
+    		});
+    		table.ajax.reload( function ( json ) {
+    			table.ajax.reload();
+    		    //$('#{{ table.table_id|safe }}').val( json.lastInput );
+    		});
+    		table.on('draw', function ( e, settings, json, xhr ) {
+    			htmx.process('#{{ table.table_id|safe }}');
+            })
+    	});
+    </script>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+{% extends './base.html' %}
+
+{% block htmx_main %}
+{{ object }}
+<div class="container">
+  <h1 class="d-inline-block">{{ verbose_name }}: {{ object }}</h1>
+  <table class="table">
+    <tbody>
+      {% for key, value in field_values.items %}
+        <tr>
+          <th scope="row">{{ key }}</th>
+          <td>{{ value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

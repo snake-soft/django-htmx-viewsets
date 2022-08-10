@@ -1,0 +1,60 @@
+{% extends './modal.html' %}
+
+{% block modal_body %}
+  <form id="modal-form" hx-post="{{ form.url }}" hx-encoding="multipart/form-data">{% csrf_token %}
+    {{ form.management_form }}
+    <div class="table-responsive{% if form.horizontal %} table-horizontal{% endif %}">
+      <table class="table">
+        {% if form.horizontal %}
+          {% for form in form %}
+            {% if forloop.first %}
+            <thead><tr>
+              {% for field in form.visible_fields %}
+                <th data-toggle="tooltip" title="{{ field.help_text }}">
+                  {{ field.label|capfirst }}
+                </th>
+              {% endfor %}
+            </tr></thead>
+            {% endif %}
+            <tr class="{% cycle row1 row2 %}{% if not form.instance.pk %} formset-extra{% endif %}">
+              {% for field in form.visible_fields %}
+                <td>
+                {# Include the hidden fields in the form #}
+                {% if forloop.first %}
+                  {% for hidden in form.hidden_fields %}
+                  {{ hidden }}
+                  {% endfor %}
+                {% endif %}
+                  {{ field.errors.as_ul }}
+                  {{ field }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        {% else %}
+          {{ form.as_table }}
+        {% endif %}
+      </table>
+    </div>
+  </form>
+  {% if form.total_error_count %}
+    <ul class="errorList">
+    {% for dict in form.errors %}
+        {% for error in dict.values %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% for error in form.errors.values %}
+  {{ error }}
+  {% endfor %}
+  <style>
+  .formset-extra{background-color: #eee;}
+  </style>
+{% endblock modal_body %}
+
+{% block modal_footer %}
+  <button type="button" class="btn btn-secondary modal-close-button" data-dismiss="modal">Schließen</button>
+  <input type="submit" class="btn btn-primary" form="modal-form" value="Absenden"/>
+{% endblock modal_footer %}
