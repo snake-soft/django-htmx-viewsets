@@ -1,0 +1,22 @@
+{% extends './dispatch.html' %}
+{% load i18n %}
+
+
+  {% block modal_title %}
+      {{ verbose_name }}: {{ object }} {% trans 'Löschen?' %}
+  {% endblock modal_title %}
+  
+  {% block modal_body %}
+    {% blocktranslate %}Möchten Sie '{{ object }}' wirklich löschen?{% endblocktranslate %}
+    <form id="modal-form" hx-boost="true" hx-swap="outerHTML" hx-target="#to-execute" hx-push-url="false" action="{{ target_url }}" method="POST">{% csrf_token %}
+        {{ form.as_table }}
+    </form>
+  {% endblock modal_body %}
+  
+  {% block modal_submit_button %}
+    <button id="modal-delete-button" type="submit" class="btn btn-primary" form="modal-form" data-dismiss="modal" aria-label="Close">
+      {% trans 'Löschen' %}
+    </button>
+    <script id="to-execute">
+    </script>
+  {% endblock modal_submit_button %}

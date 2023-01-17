@@ -1,0 +1,28 @@
+{% extends './modal.html' %}
+
+
+{% block modal_close_button %}
+    {% if request.htmx %}
+      {{ block.super}}
+    {% elif next_url %}
+      <a href="{{ next_url}}" class="btn btn-link" style="text-decoration: unset;" hx-get="{{ next_url }}" hx-swap="none" hx-push-url="true">
+        <i class="fa-solid fa-angles-left"></i> Zurück
+      </a>
+    {% endif %}
+{% endblock %}
+
+
+{% block modal_body %}
+  <div>
+    {% block main %}{% endblock %}
+  </div>
+{% endblock %}
+
+
+{% block modal_footer1 %}
+  {% if request.htmx %}
+    <button type="button" class="btn btn-secondary modal-close-button" data-dismiss="modal">Schließen</button>
+  {% elif next_url %}
+    <a href="{{ next_url}}" class="btn btn-secondary modal-close-button" data-dismiss="modal" hx-get="{{ next_url }}" hx-swap="none" hx-push-url="true">Schließen</a>
+  {% endif %}
+{% endblock modal_footer1 %}

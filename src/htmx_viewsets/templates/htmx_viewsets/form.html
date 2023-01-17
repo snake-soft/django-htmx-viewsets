@@ -1,0 +1,26 @@
+{% extends './dispatch.html' %}
+{% load i18n %}
+
+
+{% block modal_title %}
+  {{ verbose_name }}: {{ object }}
+{% endblock modal_title %}
+
+
+{% block modal_body %}
+  <style>
+    #modal-form input, #modal-form textarea, #modal-form select{width: 100%;}
+  </style>
+  <form id="modal-form" hx-boost="true" hx-swap="none" hx-push-url="false" action="{{ target_url }}" method="POST" enctype="multipart/form-data" hx-encoding="multipart/form-data">{% csrf_token %}
+    <table class="w-100">
+      {{ form.as_table }}
+    </table>
+  </form>
+{% endblock %}
+
+
+{% block modal_submit_button %}
+  <button type="submit" hx-boost="true" hx-swap="none" hx-push-url="false" class="btn btn-primary" form="modal-form" autofocus>
+    {% trans 'Speichern' %}
+  </button>
+{% endblock modal_submit_button %}

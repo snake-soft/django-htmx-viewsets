@@ -1,0 +1,38 @@
+<div id="modal-content" hx-swap="innerHTML" hx-swap-oob=true class="modal-content">
+  {% block modal_content %}
+    <div id="modal-header" class="modal-header">
+      {% block modal_header %}
+        <h5 class="modal-title" class="modal-title">
+          {% block modal_title %}{{ modal_title }}{% endblock modal_title %}
+        </h5>
+        {% block modal_close_button %}
+          {% if request.htmx %}
+            <button class="btn modal-close-button" type="button" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          {% endif %}
+        {% endblock modal_close_button %}
+      {% endblock modal_header %}
+    </div>
+    <div id="modal-body" class="modal-body">
+      {% block modal_body_pre %}{{ modal_body_pre }}{% endblock modal_body_pre %}
+      {% block modal_body %}{{ modal_body }}{% endblock modal_body %}
+      {% block modal_body_post %}{{ modal_body_post }}{% endblock modal_body_post %}
+    </div>
+    <div id="modal-footer" class="modal-footer">
+      {% block modal_footer %}
+        {{ modal_footer }}
+        {% block modal_submit_button %}{% endblock modal_submit_button %}
+        <button type="button" class="btn btn-secondary modal-close-button" data-dismiss="modal">Schließen</button>
+      {% endblock modal_footer %}
+    </div>
+  {% endblock modal_content %}
+  {% block modal_scripts_wrapper %}
+    <script>
+    	$(function(){
+  			$('#modal').modal('show');
+    		{% block modal_scripts %}{% endblock modal_scripts %}
+    	})
+    </script>
+  {% endblock modal_scripts_wrapper %}
+</div>

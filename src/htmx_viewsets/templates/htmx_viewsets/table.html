@@ -1,0 +1,76 @@
+<table id="{{ table.table_id|safe }}" class="{{ table.table_classes|safe }}" style="{{ table.styles|safe }}">
+    <thead>
+        <tr>
+          {% if table.row_actions %}
+            <th></th>
+          {% endif %}
+          {% for column in table.columns %}
+            <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+    </thead>
+    {% if not table.ajax_url %}
+      <tbody>
+        {% for row in table.rows %}
+          <tr>
+            {% for cell in row.cells %}
+              <td class="text-truncate">
+                {{ cell }}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    {% endif %}
+    {% if table.show_footer %}
+      <tfoot>
+          <tr>
+            {% if table.row_actions %}
+              <th></th>
+            {% endif %}
+            {% for column in table.columns %}
+              <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+      </tfoot>
+    {% endif %}
+</table>
+<script>
+	$(document).ready( function () {
+		var table = $('#{{ table.table_id|safe }}').DataTable({
+			responsive: true,
+			"autoWidth": false,
+			"language": {
+	            "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/German.json"
+	        },
+
+			{% if table.row_actions %}
+            columnDefs: [
+            	{ orderable: false, targets: -1 }
+            ],
+			{% endif %}
+
+			{% if table.ajax_url %}
+  	        serverSide: true,
+			ajax: {
+  				url: '{{ table.ajax_url }}',
+  				dataSrc: 'data',
+			},
+			{% endif %}
+		});
+		table.ajax.reload( function ( json ) {
+			table.ajax.reload();
+		    //$('#{{ table.table_id|safe }}').val( json.lastInput );
+		});
+		table.on('draw', function ( e, settings, json, xhr ) {
+			htmx.process('#{{ table.table_id|safe }}');
+        })
+	});
+	function reload_table(table_id){
+        var table = $('#' + table_id).DataTable();
+        table.ajax.reload(null, false);
+	}
+	htmx.onLoad(function () {
+		reload_table('#{{ table.table_id|safe }}');
+	});
+</script>

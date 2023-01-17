@@ -1,0 +1,6 @@
+{% extends request.htmx|yesno:'htmx_viewsets/partial.html,htmx_viewsets/full.html' %}
+
+
+{% block main %}
+  {% block htmx_main %}{{block.super}}{% endblock %}
+{% endblock %}
