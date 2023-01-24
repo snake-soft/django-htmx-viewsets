@@ -9,19 +9,19 @@ __all__ = ['Column']
 
 
 class Column:
-    def __init__(self, model:Model, code:str, name:Optional[str]=None) -> None:
-        self.model = model
+    def __init__(self, queryset:QuerySet, code:str, name:Optional[str]=None) -> None:
+        self.queryset = queryset
         self.code = code
         self.name = name or self.get_name()
 
     def get_name(self):
-        return self.model._meta.get_field(self.code).verbose_name
+        return self.queryset.model._meta.get_field(self.code).verbose_name
 
-    def get_query(self, qs:QuerySet, search_query:str) -> Q:
+    def get_query(self, queryset:QuerySet, search_query:str) -> Q:
         if not search_query:
             return None
 
-        field = qs.model._meta.get_field(self.code)
+        field = queryset.model._meta.get_field(self.code)
         q_kwargs = {}
         if isinstance(field, fields.BigAutoField):
             if search_query is not None and search_query.isdigit():

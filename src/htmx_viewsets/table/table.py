@@ -1,4 +1,5 @@
-from typing import Iterable, Optional, ClassVar, Dict, Any
+import json
+from typing import Iterable, Optional, Dict, Any
 from django.db import models
 from django.template.loader import get_template
 from django.urls.base import reverse
@@ -6,6 +7,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http.request import HttpRequest
 from . import row, plugins, action
+from django.db.models.query import QuerySet
 
 
 __all__ = ['Table']
@@ -27,39 +29,43 @@ class Table:
         action.EditRowAction,
         action.DeleteRowAction,
     ]
+    length_menu = json.dumps([
+        [10, 25, 50, 100, 250, 500, 1000],
+        [10, 25, 50, 100, 250, 500, 1000],
+    ])
     show_footer = False
 
-    def __init__(self, request: HttpRequest, model: models.Model,
+    def __init__(self, request: HttpRequest, queryset: models.Model,
                  url_names: Dict[str, str], codes: Optional[Iterable[str]]=None,
-                 object_list=None, **kwargs: Optional[Dict[str, Any]]) -> None:
+                 **kwargs: Optional[Dict[str, Any]]) -> None:
 
         self.request = request
-        self.model = model
-        self.qs = object_list if object_list is not None \
-            else model.objects.all()
+        assert isinstance(queryset, QuerySet)
+        self._queryset = queryset
+        self.model = queryset.model
+
         self.url_names = url_names
         self.search_query = request.GET.get('search[value]')
 
-        self.codes = codes or [x.name for x in model._meta.fields]
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        self.codes = codes or [x.name for x in self.model._meta.fields]
 
         assert self.codes
-        self.plugins = self.get_plugins(model, self.plugin_classes, self.codes)
+
+        self.plugins = self.get_plugins(self._queryset, self.plugin_classes, self.codes)
         self.columns = self.get_columns(self.plugins)
-        self.result_qs = self.get_result_qs(
-            request, self.columns, self.qs, self.search_query)
-        self.paginator = self.get_paginator(request, self.result_qs)
+        self.queryset = self.get_result_qs(
+            request, self.columns, self._queryset, self.search_query)
+        self.paginator = self.get_paginator(request, self.queryset)
         self.page = self.get_page(request, self.paginator)
         self.rows = self.get_rows(
             self.page.object_list, self.codes, self.row_actions)
-        self.verbose_name = model._meta.verbose_name
-        self.verbose_name_plural = model._meta.verbose_name_plural
+        self.verbose_name = self.model._meta.verbose_name
+        self.verbose_name_plural = self.model._meta.verbose_name_plural
 
     @staticmethod
     def get_paginator(request, result_qs):
-        return Paginator(result_qs, int(request.GET.get('length', 10)))
+        per_page = request.GET.get('length', '10')
+        return Paginator(result_qs, int(per_page))
 
     @staticmethod
     def get_page(request, paginator):
@@ -100,39 +106,37 @@ class Table:
 
     @property
     def ajax_url(self):
-        namespace = self.request.resolver_match.namespace
-        model_name = self.model._meta.model_name
-        return reverse(f'{namespace}:{model_name}-table')
+        base_url = reverse(self.url_names["table"])
+        return f'{base_url}?{self.request.GET.urlencode()}'
 
     @property
     def list_url(self):
-        namespace = self.request.resolver_match.namespace
-        model_name = self.model._meta.model_name
-        return reverse(f'{namespace}:{model_name}-list')
+        base_url = reverse(self.url_names['list'])
+        return f'{base_url}?{self.request.GET.urlencode()}'
 
     @property
     def data(self):
-        # 1 bis 10 von 100.000 Einträgen
         data = {
             "draw": int(self.request.GET.get('draw', 1)) + 1,
-            "recordsTotal": self.qs.count(),
-            "recordsFiltered": self.result_qs.count(),
+            "recordsTotal": self._queryset.count(),
+            "recordsFiltered": self.queryset.count(),
             "data": [row.data for row in self.rows],
         }
         return data
 
     def get_rows(self, object_list, codes, row_actions):
-        return [row.Row(self, self.model, instance, codes, row_actions, self.url_names)
+        return [row.Row(self, self.queryset, instance, codes, row_actions, self.url_names)
                 for instance in object_list]
 
     def get_context_data(self):
-        return {
+        ctx = {
             'table': self,
             'paginator': self.paginator,
             'page_obj': self.page,
             'is_paginated': self.page.has_other_pages(),
-            'object_list': self.result_qs,
+            'object_list': self.queryset,
         }
+        return ctx
 
     def render(self, *args, **kwargs):
         return get_template(self.template_name).render(self.get_context_data())

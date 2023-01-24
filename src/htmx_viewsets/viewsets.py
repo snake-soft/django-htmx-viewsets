@@ -4,61 +4,25 @@ from django.urls.conf import path
 from django.db import models
 from django.utils.functional import classproperty
 from htmx_viewsets.master import HtmxViewsetsMaster
-from . import views
+from . import views, chart
+from django.db.models.query import QuerySet
+from htmx_viewsets.chart import MixedChart
+from django import forms
+from .forms import EnabledFilterForm, AddFilterForm, RemoveFilterForm
 
 
 class HtmxViewSetBase(ABC):
     # Required:
     node_id:        str
+    urls            : Iterable
 
     # Optional:
-    master = None
-    base_template:  Optional[str] = 'htmx_viewsets/full.html'
-    urls:           Iterable
-
-    @classmethod
-    @abstractmethod
-    def get_url_names(cls):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_fields(cls, code):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_view_kwargs(cls, code):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_view(cls, code):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_views(cls):
-        pass
+    master          : Optional = None
+    base_template   : Optional[str] = 'htmx_viewsets/full.html'
+    charts          : Iterable = []
 
 
 class HtmxViewSet(HtmxViewSetBase):
-    """
-    Currently there is no standalone ViewSet but there might be one
-    """
-    @classproperty
-    def urls(cls):  # @NoSelf
-        return [view.url_path for view in cls.get_views()]
-
-
-class HtmxModelViewSet(HtmxViewSet):
-    # Required:
-    model:          models.Model
-
-    # Optional:
-    namespace:      Optional[str]     = None
-    url_codes:      Iterable[str]     = ['list', 'detail', 'create', 'update', 
-                                         'delete', 'table']
     url_paths = {
         'list': '',
         'detail': '<int:pk>/',
@@ -66,6 +30,7 @@ class HtmxModelViewSet(HtmxViewSet):
         'update': '<int:pk>/update/',
         'delete': '<int:pk>/delete/',
         'table': 'table/',
+        'chart': 'chart/',
     }
     view_classes = {
         'list': views.HtmxListView,
@@ -74,42 +39,49 @@ class HtmxModelViewSet(HtmxViewSet):
         'update': views.HtmxUpdateView,
         'delete': views.HtmxDeleteView,
         'table': views.HtmxTableView,
+        'chart': views.HtmxChartDataView,
     }
-    master = None
+    fields = None
+
+    enabled_filter_form_class: Optional[forms.Form] = EnabledFilterForm
+    add_filter_form_class: Optional[forms.Form] = AddFilterForm
+    remove_filter_form_class: Optional[forms.Form] = RemoveFilterForm
+
+    # For Chart
+    chart_class = MixedChart
+    label_field = None
+    data_fields = None
+
+    @classmethod
+    def get_urls(cls):  # @NoSelf
+        return [view.url_path for view in cls.get_views()]
 
     @classmethod
     def get_url_names(cls):
-        model_name = cls.model._meta.model_name
-        namespace = cls.namespace or cls.model.__module__.split('.')[0]
-        return {code: f'{namespace}:{model_name}-{code}'
-                for code in cls.url_codes}
+        return {code: f'{cls.namespace}:{cls.node_id}-{code}'
+                for code in cls.url_paths.keys()}
 
     @classmethod
-    def get_fields(cls, code):
-        return getattr(cls, f'{code}_fields', None) \
-            or getattr(cls, 'fields', None) \
-            or [field.name for field in cls.model._meta.fields]
+    def get_model_fields(cls):
+        return [field.name for field in cls.model._meta.fields]
 
     @classmethod
-    def get_view_kwargs(cls, code):
-        view_kwargs = {
-            'viewset': cls,
-            'model': cls.model,
-            'url_names': cls.get_url_names(),
-            'url_name': cls.get_url_names()[code],
-            'fields': cls.get_fields(code),
-            'node_id': cls.node_id,
-        }
-        return view_kwargs
+    def get_fields(cls):
+        return getattr(cls, 'fields') or cls.get_model_fields()
 
     @classmethod
-    def get_view(cls, code):
-        view_class = cls.view_classes[code]
-        view_kwargs = cls.get_view_kwargs(code)
-        url_path = cls.url_paths[code]
-        url_name = view_kwargs['url_name'].split(':')[-1]
+    def get_views(cls):
+        views = [cls.get_view(code, view_cls) 
+                 for code, view_cls in cls.view_classes.items()]
+        return views
 
+    @classmethod
+    def get_view(cls, code, view_class):
+        view_kwargs = {'viewset': cls}
         new_view_class = type(view_class.__name__, (view_class,), view_kwargs)
+
+        url_path = cls.url_paths[code]
+        url_name = cls.url_names[code].split(':')[-1]
         setattr(
             new_view_class,
             'url_path',
@@ -117,6 +89,26 @@ class HtmxModelViewSet(HtmxViewSet):
         )
         return new_view_class
 
-    @classmethod
-    def get_views(cls):
-        return [cls.get_view(code) for code in cls.url_codes]
+
+class HtmxModelViewSet(HtmxViewSet):
+    pass
+
+
+def modelviewset_factory(model=None, queryset=None, **kwargs):
+    cls = kwargs.get('viewset', HtmxModelViewSet)
+    assert model or isinstance(queryset, QuerySet)
+    model = model or queryset.model
+    queryset = queryset if isinstance(queryset, QuerySet) \
+        else model._default_manager.all()
+
+    kwargs.update({
+        'model': model,
+        'queryset': queryset,
+        'node_id': kwargs.get('node_id', model._meta.model_name),
+        'namespace': kwargs.get('namespace', model.__module__.split('.')[0]),
+    })
+    cls = type(cls.__name__, (cls,), kwargs)
+    setattr(cls, 'url_names', cls.get_url_names())
+    setattr(cls, 'urls', cls.get_urls())
+    setattr(cls, 'fields', cls.get_fields())
+    return cls

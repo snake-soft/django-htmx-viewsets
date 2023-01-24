@@ -1,8 +1,9 @@
 from django.db import models
-from .create_random import *
 from django.dispatch.dispatcher import receiver
+from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save, pre_save
 from htmx_viewsets.helpers import timer
+from .create_random import *
 
 MAIN_COUNT = 100000
 PARENT_COUNT = 100
@@ -236,7 +237,7 @@ class Main(NamedModel):
 
     class Meta:
         ordering = ['id']
-
+        verbose_name = _('Main')
 
 '''
     AutoField

@@ -1,0 +1,7 @@
+include *.md
+include LICENSE
+include VERSION
+recursive-include src/htmx_viewsets/templates *.html
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude *.sqlite

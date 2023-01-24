@@ -1,6 +1,7 @@
 from typing import Iterable, Dict, TYPE_CHECKING
 from django.db.models import Model
 from .cell import Cell
+from django.db.models.query import QuerySet
 
 
 __all__ = ['Row']
@@ -17,19 +18,20 @@ class Row:
     def __init__(
             self,
             table:      'Table',
-            model:      Model,
+            queryset:   QuerySet,
             instance:   Model,
             codes:      Iterable[str],
             row_actions:Iterable['TableRowAction'],
             url_names:  Dict[str,str]
             ) -> None:
+        assert isinstance(queryset, QuerySet)
         self.table = table
-        self.model = model
+        #self.model = model
         self.instance = instance
         self.codes = codes
         self.row_actions = [
             action(self, instance, url_names) for action in row_actions]
-        self.cells = self.get_cells(model, instance, codes)
+        self.cells = self.get_cells(queryset, instance, codes)
 
     @staticmethod
     def get_cells(model, instance, codes):

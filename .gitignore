@@ -1,5 +1,5 @@
 /.coverage
-/.directory
+.directory
 /.pydevproject
 /.project
 *.pyc
@@ -19,3 +19,4 @@ build
 .eggs/
 .tox/
 .settings/
+/.mypy_cache/

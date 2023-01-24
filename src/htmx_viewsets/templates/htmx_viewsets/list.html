@@ -1,18 +1,88 @@
 {% extends './dispatch.html' %}
 
 {% block htmx_main %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <div class="row mt-3">
     <div class="col-12">
       <h2>{{ verbose_name_plural }}</h2>
     </div>
-  </div>
-  <div class="row mt-3">
-    <div class="col-12">
-      <div class="row">
-        <div class="col-12 table-responsive">
-          {% include table %}{{ table_id }}
-        </div>
+    <div class="row">
+      <div class="col-12">
+        <form id="add-filter-argument-form" method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
+          <table>
+            {{ add_filter_form.as_table }}
+            <tr>
+              <td>
+              </td>
+              <td>
+                <button class="btn btn-primary" type="submit">Filter hinzufügen</button>
+                <button class="btn btn-secondary" type="reset">Zurücksetzen</button>
+              </td>
+            </tr>
+          </table>
+        </form>
       </div>
     </div>
+    <form method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
+      {% if enabled_filter_form.enabled_lookups %}
+        <div class="row mt-3">
+          <div class="col-auto">
+            <span class="badge badge-light text-bg-light">
+              Filter entfernen:
+            </span>
+          </div>
+          {% for lookup in enabled_filter_form.enabled_lookups %}
+            <div class="col-auto">
+              <button type="submit" class="btn btn-{{ lookup.bg_class }} btn-sm p-0" name="delete_method_lookup" value="{{ lookup.method_lookup }}={{ lookup.value }}">
+                <span class="badge">
+                  {{ lookup.lookup }}={{ lookup.value }}
+                </span>
+              </button>
+            </div>
+          {% endfor %}
+          <div class="row">
+            <div class="col-12">
+              <hr>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </form>
   </div>
+  {% if chart %}
+    <div class="row">
+      <div class="col-12">
+        {% include './chart.html' %}
+      </div>
+    </div>
+    <div class="col-12">
+      <hr>
+    </div>
+  {% endif %}
+  <div class="row mt-3">
+    <div class="col-12 table-responsive">
+      {% include table %}{{ table_id }}
+    </div>
+  </div>
+<script>
+	const types = {{ enabled_filter_form.types_json|safe }};
+	$('#id_x__type').select2({});
+	$('#id_x__lookup').select2({});
+	function refreshField(){
+		var lookup = $('#id_x__lookup').val();
+		var field = types[lookup];
+		if(!field){
+			console.log('Missing swap field ' + lookup);
+		}else{
+    		$('#add-filter-argument-form [name=x__argument]').replaceWith(types[lookup]);
+		}
+	}
+	$('#id_x__lookup').change(function (element){
+		refreshField();
+	})
+	$(document).ready(function () {
+		refreshField();
+	})
+</script>
 {% endblock %}

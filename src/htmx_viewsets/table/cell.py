@@ -1,14 +1,16 @@
 from django.db.models import fields
+from django.db.models.query import QuerySet
 
 __all__ = ['Cell']
 
 
 class Cell:
-    def __init__(self, model, instance, code):
+    def __init__(self, queryset, instance, code):
+        assert isinstance(queryset, QuerySet)
         self.instance = instance
         assert instance
         self.code = code
-        self.field = model._meta.get_field(code)
+        self.field = queryset.model._meta.get_field(code)
 
     def __str__(self):
         try:
