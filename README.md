@@ -73,4 +73,21 @@ Template
 ------------------------
 Project contains a full template.
 If you want to use your own template, you can overwrite the template (htmx_viewsets/full.html) or pass the full_template_name as kwarg to modelviewset_factory.
-The full-template needs a block called 'main'.
+The template should contain the following tags and blocks:
+
+```html
+{% load htmx_viewsets %}
+<html>
+  <head>
+    {% htmx_viewsets_static_all %}
+  </head>
+  <body>
+    {% block main %}{% endblock main %}
+    {% htmx_viewsets_fixed_content %}
+  </body>
+</html>
+```
+htmx_viewsets_static_all can be splitted by using htmx_viewsets_static_js and htmx_viewsets_static_css.
+
+htmx_viewsets_fixed_content can be splitted by using htmx_viewsets_modal and htmx_viewsets_messages.
+
