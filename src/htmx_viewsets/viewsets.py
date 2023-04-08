@@ -21,6 +21,7 @@ from .fields import ViewsetModelField
 from .table import Table
 from .chart import MixedChart
 from . import views
+from django.db.models.expressions import Ref
 
 
 ADDITIONAL_LOOKUPS = {
@@ -262,7 +263,10 @@ class HtmxModelViewSet(HtmxViewSet):
         if qs.query.group_by == True:
             raise
         for expression in qs.query.group_by:
-            field = copy(expression.source_expressions[0].output_field)
+            if isinstance(expression, Ref):
+                field = copy(expression.output_field)
+            else:
+                field = copy(expression.source_expressions[0].output_field)
             name = self.group_by_form.cleaned_data['group_by']
             setattr(field, 'name', name)
             fields[name] = self.field_class(field, qs)
