@@ -14,6 +14,7 @@ Built with
 + [jQuery](https://jquery.com/)
 + [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 + [Datatables](https://datatables.net/)
++ [Select2]([https://datatables.net/](https://select2.org/))
 
 Description
 ------------------------
