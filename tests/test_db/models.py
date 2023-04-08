@@ -1,8 +1,6 @@
 from django.db import models
-from django.dispatch.dispatcher import receiver
 from django.utils.translation import gettext_lazy as _
-from django.db.models.signals import post_save, pre_save
-from htmx_viewsets.helpers import timer
+
 from .create_random import *
 
 
@@ -239,7 +237,6 @@ class Main(NamedModel):
     #    return Child.objects.bulk_create(childs_to_add)
     
     @staticmethod
-    @timer
     def add_attribute_values(instances):
         attributes = Attribute.create_n(ATTRIBUTE_COUNT)
         attributes_to_add = []
