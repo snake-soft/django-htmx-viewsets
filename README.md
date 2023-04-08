@@ -81,6 +81,14 @@ urlpatterns = [
 ```
 
 
+Middleware
+------------------------
+
+```python
+MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware', "debug_toolbar.middleware.DebugToolbarMiddleware",]
+```
+
+
 Template
 ------------------------
 Project contains a full template.
