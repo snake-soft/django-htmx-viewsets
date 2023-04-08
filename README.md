@@ -15,6 +15,7 @@ Built with
 + [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 + [Datatables](https://datatables.net/)
 + [Select2](https://select2.org/)
++ [Font Awesome](https://fontawesome.com/)
 
 Description
 ------------------------
@@ -67,3 +68,9 @@ urlpatterns = [
     path('main/', include(MainViewSet.urls)),
 ]
 ```
+
+Template
+------------------------
+Project contains a full template.
+If you want to use your own template, you can overwrite the template (htmx_viewsets/full.html) or pass the full_template_name as kwarg to modelviewset_factory.
+The full-template needs a block called 'main'.
