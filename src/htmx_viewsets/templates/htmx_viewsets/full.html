@@ -1,99 +1,10 @@
-{% load i18n static django_htmx %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:"en-gb" }}" class="{% block html_class %}no-js{% endblock %}">
+{% load htmx_viewsets %}
+<html>
   <head>
-    <title></title>
-    <meta charset="utf-8">
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <meta name="created" content="{% now 'jS M Y h:i' %}" />
-    <meta name="description" content="{% block description %}{% endblock %}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="robots" content="NOARCHIVE,NOCACHE" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/htmx.org@1.8.0" integrity="sha384-cZuAZ+ZbwkNRnrKi05G/fjBX+azI9DNOkNYysZ0I/X5ZFgsmMiBXgDZof30F5ofc" crossorigin="anonymous"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.1/datatables.min.css"/>
-    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.1/datatables.min.js"></script>
+    {% htmx_viewsets_static_all %}
   </head>
-
-  <body 
-      id="{% block body_id %}default-body{% endblock %}" 
-      class="{% block body_class %}default-body{% endblock %} bg-white" 
-      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      {% comment %}
-      Create dynamic data url
-      hx-trigger="refresh_dynamic_data, load" 
-      hx-get="{% url 'project_builder:dynamic-data' %}?format=html"
-      hx-swap="none"
-      {% endcomment %}
-      >
-
-    <div class="container">
-      <div class="row justify-content-end">
-        <div class="col">
-          <h1 class="d-inline-block">
-            {% block modal_title %}{% endblock modal_title %}
-          </h1>
-        </div>
-        {% if next_url %}
-            <div class="col-auto">
-              <a href="{{ next_url}}" class="btn btn-link" style="text-decoration: unset;">
-                <i class="fa-solid fa-angles-left"></i> Zurück
-              </a>
-            </div>
-        {% endif %}
-      </div>
-      {% block modal_body %}{% endblock modal_body %}
-      {% block main %}{% endblock main %}
-      {% block modal_footer %}
-        {% if next_url %}
-          <div class="row justify-content-end">
-            <div class="col-auto">
-              {% block modal_submit_button %}{% endblock modal_submit_button %}
-            </div>
-            <div class="col-auto">
-              <a href="{{ next_url}}" class="btn btn-secondary modal-close-button ml-auto" >Schließen</a>
-            </div>
-          </div>
-        {% endif %}
-      {% endblock modal_footer %}
-    </div>
-
-    <div id="modal" class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div id="modal-content" class="modal-content">
-          <div class="spinner-border mx-auto my-5" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="container-fluid position-fixed" style="z-index: 10000000;bottom:0;left:0;visibility:hidden;">
-      <div class="row">
-        <div id="messages" style="visibility: visible;"></div>
-      </div>
-    </div>
-    <script>
-        $( document ).ready(function() {
-            {% block onbodyload %}{% endblock %}
-        });
-        $(function() {
-            htmx.onLoad(function() {
-              $('.modal-close-button').on('click', function () {
-                  $('#modal').modal('hide');
-              });
-              {% block onhtmxload %}{% endblock %}
-            });
-        });
-    </script>
-    {% django_htmx_script %}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-    <style>
-      .btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-light, .btn-dark{
-        border-radius: unset; box-shadow: 0px 0px 3px 0px black;
-      }
-      .btn-link{box-shadow: unset!important;}
-    </style>
+  <body>
+    {% block main %}{% endblock main %}
+    {% htmx_viewsets_fixed_content %}
   </body>
 </html>
