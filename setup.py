@@ -3,23 +3,42 @@ import sys
 from setuptools import find_packages, setup
 
 
+try:
+    with open('VERSION') as file:
+        version = file.readlines()[0]
+except FileNotFoundError:
+    version = '0.0.0'
+
+
 install_requires = [
-    'django>=3.0,<5.0',
+    'django>=3.2,<5.0',
+    'django-htmx>=1.0.0,<2.0.0',
 ]
 
 
 tests_require = [
-    'django>=3.0,<5.0',
+    *install_requires,
+    'django-debug-toolbar>=3.8.0',
+    'django-extensions>=3.2.0',
+    'psycopg2-binary>=2.9.0',
+    'Werkzeug>=2.2.0',
+    'coverage>=7.2.0',
+]
+
+
+build_require = [
+    *tests_require,
+    'build==0.10.0',
 ]
 
 
 setup(
     name='django-htmx-viewsets',
-    #version=__version__,
+    version=version,
     author="Snake-Soft",
     author_email="info@snake-soft.com",
     description="Viewsets for Django using HTMX, Chartjs and DataTables",
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     license='GPL3',
     package_dir={'': 'src'},
     packages=find_packages('src'),
@@ -45,5 +64,6 @@ setup(
     tests_require=tests_require,
     extras_require={
         'test': tests_require,
+        'build': build_require,
     },
 )
