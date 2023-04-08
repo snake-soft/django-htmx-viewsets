@@ -1,6 +1,7 @@
 include *.md
 include LICENSE
 include VERSION
+include src/htmx_viewsets/VERSION
 recursive-include src/htmx_viewsets/templates *.html
 global-exclude __pycache__
 global-exclude *.py[co]
