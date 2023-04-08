@@ -6,22 +6,11 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.http.response import JsonResponse, HttpResponse
 from django.views.generic.base import ContextMixin, TemplateResponseMixin, View
-from django.utils.functional import cached_property, classproperty
 from django import forms
 from django.http.request import HttpRequest
 from django.db.models.query import QuerySet
 from django.shortcuts import redirect, reverse
-from . import Table
 from .chart import ChartBase
-from .table.cell import Cell
-from .tab import TabManager, Tab
-from django.urls.conf import path
-import json
-from django.db.models.aggregates import Count
-
-
-if TYPE_CHECKING:
-    from . import chart, viewsets
 
 
 class CloseModalResponse:
@@ -46,6 +35,7 @@ class RefreshDataTableResponse:
 class HtmxView(ContextMixin, View):
     pass
 
+
 class ViewResponse:
     def __new__(cls, view_class:View, request:HttpRequest, method:str='get',
                 **kwargs:Optional[Any]) -> HttpResponse:
@@ -62,11 +52,12 @@ class HtmxModelView(HtmxView, TemplateResponseMixin, ContextMixin):
     select_related:     Iterable[str] = []
 
     # Later: permission_required:Iterable[Permission] = []
-    url_names:          Dict[str, str] = {}
+    #url_names:          Dict[str, str] = {}
 
     template_name:      str = 'htmx_viewsets/form.html'
     object:             models.Model
     node_id     : str
+    viewset_class     : 'viewsets.HtmxViewSetBase'
     viewset     : 'viewsets.HtmxViewSetBase'
     model: models.Model
     base_queryset: QuerySet
@@ -78,35 +69,24 @@ class HtmxModelView(HtmxView, TemplateResponseMixin, ContextMixin):
     chart_class: ChartBase
 
     def __new__(cls):
-        for attr in ['node_id', 'model', 'url_names', 'fields',
-                     'chart_class', 'label_field',
-                     'enabled_filter_form_class', 'add_filter_form_class',
-                     'remove_filter_form_class']:
-            setattr(cls, attr, getattr(cls.viewset, attr))
-        cls.base_queryset = cls.viewset.queryset
+        setattr(cls, 'url_names', cls.viewset_class.url_names)
         return ContextMixin.__new__(cls)
 
-    def get_context_data111(self, **kwargs:Optional[Any]) -> dict:
-        ctx = {
-            **ContextMixin.get_context_data(self, **kwargs),
-            'node_id': self.node_id,
-            'chart': self.get_chart(),
-            'enabled_filter_form': self.enabled_filter_form_class(self.model, self.request.GET),
-            'add_filter_form': self.add_filter_form_class(self.model),
-            'get_kwargs': self.request.GET.urlencode(),
-        }
-        return ctx
+    def dispatch(self, request, *args, **kwargs):
+        self.viewset = self.viewset_class(request)
+        self.fields = self.get_fields()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        form = self.enabled_filter_form_class(self.model, self.request.GET)
-        qs = self.base_queryset
-        qs = qs.prefetch_related(*self.prefetch_related)
-        qs = qs.select_related(*self.select_related)
-        if form.is_valid():
-            qs = form.filter_queryset(qs)
-        else:
-            raise
-        return qs
+        return self.viewset.get_queryset()
+
+    def get_fields(self):
+        qs = self.get_queryset()
+        model_fields = [field.name for field in qs.query.get_meta().fields 
+                        if not field.primary_key]
+        viewset_fields = [field.name for field in self.viewset.viewset_fields]
+        return [model_field for model_field in model_fields 
+                if model_field in viewset_fields]
 
     def get_success_url(self) -> Any:
         if self.object:
@@ -118,38 +98,16 @@ class HtmxModelView(HtmxView, TemplateResponseMixin, ContextMixin):
 
     def get_context_data(self, *args:Optional[Any], **kwargs:Optional[Any]) -> Dict[str, Any]:
         ctx = super().get_context_data(*args, **kwargs)
-        ctx.update({
-            'fields': self.fields,
-            'target_url': self.request.path,
-            'next_url': self.get_next_url(),
-            'field_values': self.get_field_values(),
-            'create_url': self.url_names.get('create', None),
-            'verbose_name': self.model._meta.verbose_name,
-            'verbose_name_plural': self.model._meta.verbose_name_plural,
-
-            'node_id': self.node_id,
-            'chart': self.get_chart(),
-            'enabled_filter_form': self.enabled_filter_form_class(self.model, self.request.GET),
-            'add_filter_form': self.add_filter_form_class(self.model),
-            'get_kwargs': self.request.GET.urlencode(),
-        })
+        ctx.update(self.viewset.get_context_data())
+        ctx['field_values'] = self.get_field_values()
+        ctx['next_url'] = self.get_next_url()
         return ctx
 
     def get_field_values(self) -> Optional[OrderedDict]:
         if hasattr(self, 'object') and self.object:
-            cells = [
-                Cell(self.model, self.object, field) for field in self.fields]
-            return OrderedDict(
-                [[x.field.verbose_name, str(x)] for x in cells])
-
-    def get_table(self) -> Table:
-        return Table(self.request, self.get_queryset(), self.url_names,
-                     codes=self.fields, table_id=f'{self.node_id}-table')
-
-    def get_chart(self) -> ChartBase:
-        if self.chart_class:
-            return self.chart_class(self, model=self.model, queryset=self.get_queryset())
-        return None
+            row = self.viewset.table.get_row(self.object)
+            values = [(cell.verbose_name, cell.render()) for cell in row.cells]
+            return OrderedDict(values)
 
     def get_next_url(self) -> Any:
         method = self.request.method
@@ -166,23 +124,25 @@ class HtmxListView(HtmxModelView, ListView):
     def post(self, request:HttpRequest, *args:Optional[Any], **kwargs:Optional[Any]):
         request_get = request.GET.copy()
 
-        form = self.add_filter_form_class(self.model, self.request.POST)
+        form = self.viewset.add_filter_form
         if form.is_valid():
             request_get.update(form.cleaned_data)
-            return redirect(f'{request.path}?{request_get.urlencode()}')
 
-        form = self.remove_filter_form_class(self.model, self.request.POST)
+        form = self.viewset.remove_filter_form
         if form.is_valid():
             for key in form.cleaned_data.keys():
                 request_get.pop(key)
-            return redirect(f'{request.path}?{request_get.urlencode()}')
 
-        return super().post(request, *args, **kwargs)
+        form = self.viewset.group_by_form
+        request_get.pop('group_by', None)
+        if form.is_valid():
+            request_get.update(form.cleaned_data)
+
+        return redirect(f'{request.path}?{request_get.urlencode()}')
 
     def get_context_data(self, *args:Optional[Any], **kwargs:Optional[Any])->Dict[str, Any]:
         ctx = super().get_context_data(*args, **kwargs)
         ctx.pop('next_url', None)
-        ctx.update(self.get_table().get_context_data())
         return ctx
 
 
@@ -191,7 +151,10 @@ class HtmxTableView(HtmxModelView, ListView):
     code = 'table'
 
     def get(self, request:HttpRequest, *args:Optional[Any], **kwargs:Optional[Any]) -> JsonResponse:
-        return JsonResponse(self.get_table().data)
+        return JsonResponse(self.viewset.table.data)
+
+    def post(self, request:HttpRequest, *args:Optional[Any], **kwargs:Optional[Any]) -> JsonResponse:
+        return self.get(request, *args, **kwargs)
 
 
 class HtmxDetailView(HtmxModelView, DetailView):
@@ -229,8 +192,7 @@ class HtmxDeleteView(HtmxModelView, DeleteView):
     def form_valid(self, form: forms.Form) -> HttpResponse:
         super().form_valid(form)
         if self.request.htmx:
-            table = self.get_table()
-            return RefreshDataTableResponse(table.table_id)
+            return RefreshDataTableResponse(self.viewset.table.table_id)
         return redirect(self.get_next_url())
 
 
@@ -240,4 +202,4 @@ class HtmxChartDataView(HtmxModelView, ListView):
     template_name = ''
 
     def get(self, request:HttpRequest, *args:Optional[Any], **kwargs:Optional[Any]) -> JsonResponse:
-        return JsonResponse({'data': self.get_chart().data})
+        return JsonResponse({'data': self.viewset.chart.data})

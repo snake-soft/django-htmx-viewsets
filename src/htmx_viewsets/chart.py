@@ -1,16 +1,80 @@
 import json
 import datetime
-from abc import ABC
-from typing import Iterable, Optional
-from decimal import Decimal as D
-from django.db import models
-from django.utils.functional import cached_property
-from django.db.models.query import QuerySet
+from typing import Iterable
+
+from django.db.models.aggregates import Sum, Count, Avg, Min, Max, Variance,\
+    StdDev
+
+from .fields import ViewsetModelField
 
 
-class ChartBase(ABC):
-    label_field: Optional[str] = None
-    data_fields: Optional[Iterable[str]] = None
+DATASET_OPTIONS = {
+    Sum: {},
+    Count: {},
+    Avg: {},
+    Min: {'hidden': True},
+    Max: {'hidden': True},
+    Variance: {'hidden': True},
+    StdDev: {'hidden': True},
+}
+
+
+class Dataset(dict):
+    def __init__(self, field, data):
+        self.field                  = field
+        self.update({
+            'type': 'line',
+            'label': field.verbose_name or field.name.title(),
+            'data': [*data],
+            'color': field.color,
+            'borderColor': field.color,
+            'backgroundColor': field.color,
+        })
+
+
+class ChartDatasets:
+    dataset_options = DATASET_OPTIONS
+    data_fields: Iterable[ViewsetModelField]
+
+    @property
+    def values_list(self):
+        return self.get_values_list(self.queryset, self.fields)
+
+    @property
+    def data(self):
+        data = {
+            'labels': self.labels,
+            'datasets': self.datasets,
+        }
+        return data
+
+    @property
+    def datasets(self):
+        return [dataset for dataset in self.get_datasets()]
+
+    def get_values_list(self, queryset, fields):
+        names = [field.name for field in fields]
+        return queryset.values_list(*names, named=True)
+
+    def get_dataset(self, field):
+        return Dataset(field)
+
+    def get_datasets(self):
+        for i, field in enumerate(self.data_fields):
+            data = (x[i] for x in self.values_list)
+            yield Dataset(field, data)
+
+    @property
+    def labels(self):
+        return self.get_labels()
+
+    def get_labels(self):
+        return [str(x[0]) for x in self.values_list]
+
+
+class ChartBase(ChartDatasets):
+    #label_field: Optional[str] = None
+    #data_fields: Optional[Iterable[str]] = None
     type = None  # May be set on subclass
     options = {
         'interaction': {
@@ -27,80 +91,49 @@ class ChartBase(ABC):
     }
     max_data_points = 1000
 
-    def __init__(self, view, model=None, queryset=None, data_fields=None,
-                 label_field=None, options=None, type=None):
+    def __init__(self, queryset, fields, chart_id, url_names):
         super().__init__()
-        self.view = view
-        self.chart_id = f'chart_{view.node_id}'
-        self.url = view.url_names['chart']
+        assert fields is not None
+        #self.field_names = field_names
+        #self.fields = self.get_fields(queryset, field_names)
+        self.fields = fields
+        self.label_field = self.get_label_field()
+        self.data_fields = self.get_data_fields()
 
-        assert isinstance(model, models.Model) or isinstance(queryset, QuerySet)
-        self.model = self.get_model(queryset=queryset, model=model)
-        self.queryset = self.get_queryset(queryset=queryset, model=model)
-        self.options = self.get_options(options=options)
+        self.chart_id = chart_id
+        self.url = url_names['chart']
 
-        self.type = self.get_type(type=type)
-        self.label_field = self.get_label_field(label_field=label_field)
-        self.data_fields = self.get_data_fields(data_fields=data_fields)
+        self.queryset = queryset[:self.max_data_points]
 
-    @cached_property
-    def values_list(self):
-        fields = [self.label_field, *self.data_fields]
-        return [*self.queryset.values_list(*fields)]
 
-    def get_model(self, queryset=None, model=None):
-        return model or queryset.model
+    @staticmethod
+    def get_fields(queryset, field_names):
+        return ViewsetModelField.get_queryset_fields(queryset, field_names)
 
-    def get_queryset(self, queryset=None, model=None):
-        if isinstance(queryset, QuerySet):
-            qs = queryset#[:100]
-        else:
-            qs = model.objects.all()#[:100]
-        return qs[:self.max_data_points]
+    def get_label_field(self):
+        return [*self.fields][0]
 
-    def get_default_data_fields(self):
-        allowed_field_types = [
-            'IntegerField'
-            'PositiveBigIntegerField',
-            'PositiveIntegerField',
-            'PositiveSmallIntegerField',
-            'SmallIntegerField',
-            'FloatField',
-            'DecimalField',
-            'BooleanField',
-            'DurationField',
-            'DateTimeField',
-            'DateField',
-        ]
-        model_fields = [field.name for field in self.model._meta.fields
-                        if field.get_internal_type() in allowed_field_types]
-        return model_fields
+    def get_data_fields(self):
+        data_fields = []
+        allowed = ViewsetModelField.allowed_data_fields
+        for field in self.fields: #.items():
+            is_allowed = field.model_field.__class__ in allowed
+            if is_allowed and field != self.label_field:
+                data_fields.append(field)
+        return data_fields
 
-    def get_data_fields(self, data_fields=None):
-        if data_fields is not None:
-            return data_fields
-        if self.__class__.data_fields is not None:
-            return self.__class__.data_fields
-        return self.get_default_data_fields()
+    @staticmethod
+    def to_str(name, value, field):
+        clean_str_func = getattr(field, 'clean_str_func', None)
+        if clean_str_func is not None:
+            value = clean_str_func(value)
+        elif isinstance(value, datetime.datetime):
+            value = value.strftime('%d.%m.%y %H:%M:%S')
+        return value
 
-    def get_default_label_field(self):
-        """
-        first datetimefield or first datefield or pk
-        """
-        for field in self.model._meta.fields:
-            if field.get_internal_type() == 'DateTimeField':
-                return field.name
-        for field in self.model._meta.fields:
-            if field.get_internal_type() == 'DateField':
-                return field.name
-        import pdb; pdb.set_trace()  # <---------
-
-    def get_label_field(self, label_field=None):
-        if label_field is not None:
-            return label_field
-        if self.__class__.label_field is not None:
-            return self.__class__.label_field
-        return self.get_default_label_field()
+    @classmethod
+    def clean_row(cls, values_row, fields):
+        return [cls.to_str(name, value, fields[name]) for name, value in values_row.items()]
 
     @property
     def config(self):
@@ -115,35 +148,6 @@ class ChartBase(ABC):
     def config_json(self):
         return json.dumps(self.config)
 
-    @property
-    def data(self):
-        data = {
-            'labels': self.get_labels(),
-            'datasets': self.get_datasets(),
-        }
-        return data
-
-    def get_dataset_classes(self):
-        default_datasets = [
-            Dataset.from_field_code(self, code) for code in self.fields]
-        return self.dataset_classes or default_datasets
-
-    def get_datasets(self):
-        values_list = [
-            [self.clean_data(y) for y in x[1:]] 
-            for x in self.values_list
-        ]
-        datasets = []
-        fields = [self.model._meta.get_field(code) for code in self.data_fields]
-        for i, code in enumerate(self.data_fields):
-            data = [x[i] for x in values_list]
-            label = fields[i].verbose_name or fields[i].name.title()
-            datasets.append({
-                'type': self.type,
-                'label': label,
-                'data': data,
-            })
-        return datasets
 
     def get_options(self, options=None):
         if options is not None:
@@ -151,31 +155,6 @@ class ChartBase(ABC):
         if self.__class__.options is not None:
             return self.__class__.options
         return {}
-
-    def get_labels(self):
-        labels = [str(x[0]) for x in self.values_list]
-        return labels
-
-    @staticmethod
-    def clean_data(data):
-        if isinstance(data, D):
-            return float(data)
-        if isinstance(data, datetime.timedelta):
-            return data.total_seconds()
-        if isinstance(data, datetime.datetime):
-            return data.timestamp()
-        if isinstance(data, datetime.date):
-            return datetime.datetime.fromordinal(data.toordinal()).timestamp()
-        if isinstance(data, datetime.time):
-            return NotImplementedError
-        return data
-
-    def get_type(self, type):
-        if type is not None:
-            return type
-        if self.__class__.type is not None:
-            return self.__class__.type
-        return 'line'
 
 
 class MixedChart(ChartBase):

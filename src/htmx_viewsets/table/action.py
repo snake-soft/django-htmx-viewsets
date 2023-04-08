@@ -7,12 +7,12 @@ class TableRowAction:
     url_name = None
     push_url = False
 
-    def __init__(self, row, instance, url_names):
+    def __init__(self, row, url_names):
         self.row = row
-        self.instance = instance
+        self.instance = row.instance
         self.url_names = url_names
 
-    def render(self, *args, **kwargs):
+    def render(self):
         btn = f'''
         <a 
             class="btn btn-link" 
@@ -34,11 +34,6 @@ class TableRowAction:
     def get_hx_url(self):
         url_name = self.url_names.get(self.code, None)
         return reverse(url_name, kwargs={'pk': self.instance.pk})
-        
-        url_name = self.url_names.get('list', None)
-        if url_name:
-            return reverse(url_name)
-        return None
 
 
 class DetailRowAction(TableRowAction):

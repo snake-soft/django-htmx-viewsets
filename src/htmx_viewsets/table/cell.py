@@ -1,30 +1,33 @@
 from django.db.models import fields
-from django.db.models.query import QuerySet
+
 
 __all__ = ['Cell']
 
 
 class Cell:
-    def __init__(self, queryset, instance, code):
-        assert isinstance(queryset, QuerySet)
-        self.instance = instance
-        assert instance
-        self.code = code
-        self.field = queryset.model._meta.get_field(code)
+    def __init__(self, row, column):
+        self.row = row
+        self.column = column
+        self.instance = row.instance
+        self.viewset_field = column.viewset_field
+        self.model_field = column.viewset_field.model_field
+        self.verbose_name = column.viewset_field.model_field.verbose_name
 
-    def __str__(self):
-        try:
-            value = getattr(self.instance, self.code, None)
-        except AttributeError:
-            value = self.instance[self.code]
+    def render(self):
+        if isinstance(self.instance, dict):
+            value = self.instance.get(self.model_field.name)
+        else:
+            value = getattr(self.instance, self.model_field.name)
+        value = self.viewset_field.clean_value(value)
+
         if value is None:
             return '<i class="fa-solid fa-ban text-warning"></i>'
 
-        if isinstance(self.field, fields.related.ManyToManyField):
-            manager = getattr(self.instance, self.code)
+        if isinstance(self.model_field, fields.related.ManyToManyField):
+            manager = getattr(self.instance, self.model_field.name)
             return ', '.join([str(x) for x in manager.all()])
 
-        if isinstance(self.field, fields.BooleanField):
+        if isinstance(self.model_field, fields.BooleanField):
             return {
                 True: '<i class="fa-solid fa-check text-success"></i>',
                 False: '<i class="fa-solid fa-xmark text-danger"></i>',
@@ -39,3 +42,17 @@ class Cell:
             except TypeError:
                 pass
         return f'<span class="cell">{value}</span>'
+
+
+class ActionCell(Cell):
+    name = ''
+    verbose_name = ''
+
+    def __init__(self, row, column):
+        self.row = row
+        self.column = column
+        self.actions = self.row.actions
+
+    def render(self):
+        actions = ''.join(action.render() for action in self.row.actions)
+        return f'<div class="btn-group">{actions}</div>'

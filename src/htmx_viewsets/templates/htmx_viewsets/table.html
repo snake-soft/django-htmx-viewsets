@@ -1,11 +1,11 @@
 <table id="{{ table.table_id|safe }}" class="{{ table.table_classes|safe }}" style="{{ table.styles|safe }}">
     <thead>
         <tr>
-          {% if table.row_actions %}
+          {% if False and table.row_action_classes %}
             <th></th>
           {% endif %}
           {% for column in table.columns %}
-            <th>{{ column }}</th>
+            <th style="color: {{ column.field.color }}">{{ column }}</th>
           {% endfor %}
         </tr>
     </thead>
@@ -25,7 +25,7 @@
     {% if table.show_footer %}
       <tfoot>
           <tr>
-            {% if table.row_actions %}
+            {% if False and table.row_action_classes %}
               <th></th>
             {% endif %}
             {% for column in table.columns %}
@@ -36,7 +36,28 @@
     {% endif %}
 </table>
 <script>
+    function reload_table(table_id){
+        var table = $('#' + table_id).DataTable();
+        table.ajax.reload(null, false);
+    }
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 	$(document).ready( function () {
+        const csrftoken = getCookie('csrftoken');
+
 		var table = $('#{{ table.table_id|safe }}').DataTable({
 			lengthMenu: {{ table.length_menu|safe }},
 			stateSave: true,
@@ -64,9 +85,9 @@
 					"sortDescending": ": aktivieren, um Spalte absteigend zu sortieren",
 				},
 	        },
-			{% if table.row_actions %}
-            columnDefs: [
-            	{ orderable: false, targets: -1 }
+			{% if table.row_action_classes %}
+	        columnDefs: [
+            	{ orderable: false, targets: 0 }
             ],
 			{% endif %}
 
@@ -74,22 +95,18 @@
   	        serverSide: true,
 			ajax: {
   				url: '{{ table.ajax_url|safe }}',
+  				type: "POST",
   				dataSrc: 'data',
+  				headers: {'X-CSRFToken': csrftoken},
 			},
 			{% endif %}
 		});
-		table.ajax.reload( function ( json ) {
-			table.ajax.reload(null, false);
-		});
+		htmx.onLoad(function(){
+			reload_table('{{ table.table_id|safe }}');
+		})
 		table.on('draw', function ( e, settings, json, xhr ) {
 			htmx.process('#{{ table.table_id|safe }}');
         })
-	});
-	function reload_table(table_id){
-        var table = $('#' + table_id).DataTable();
-        table.ajax.reload(null, false);
-	}
-	htmx.onLoad(function () {
-		reload_table('{{ table.table_id|safe }}');
+
 	});
 </script>

@@ -1,0 +1,17 @@
+<div>
+  <canvas id="chart_{{ chart.chart_id }}"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('chart_{{ chart.chart_id }}');
+  const chart = new Chart(ctx, {{ chart.config_json|safe }});
+  $.ajax({
+	  url: '{% url chart.url %}?{{ get_kwargs|safe }}',
+	  type: 'GET',
+	  success: function (response) {
+		  chart.data = response.data;
+		  chart.update();
+	  }
+  })
+</script>

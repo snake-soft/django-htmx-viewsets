@@ -1,8 +1,8 @@
 from django.urls.conf import include, path
-from .views import TabView
+from .views import MainViewSet
 
 
 app_name = 'test_db'
 urlpatterns = [
-    path('', include(TabView.urls)),
+    path('main/', include(MainViewSet.urls)),
 ]
