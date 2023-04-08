@@ -93,8 +93,10 @@ The template should contain the following tags and blocks:
     {% htmx_viewsets_static_all %}
   </head>
   <body>
-    {% block main %}{% endblock main %}
-    {% htmx_viewsets_fixed_content %}
+    <div class="container">
+      {% block main %}{% endblock main %}
+      {% htmx_viewsets_fixed_content %}
+    </div>
   </body>
 </html>
 ```
