@@ -1,87 +1,87 @@
 {% extends './dispatch.html' %}
 
 {% block htmx_main %}
-<div class="container-fluid">
-  <div class="row mt-3">
-    <div class="col-12">
-      <h2>{{ verbose_name_plural }}</h2>
-    </div>
-    <form method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
-      {% if enabled_filter_form.enabled_lookups %}
-        <div class="row mt-3">
-          <div class="col-auto">
-            <span class="badge badge-light text-bg-light">
-              Filter entfernen:
-            </span>
-          </div>
-          {% for lookup in enabled_filter_form.enabled_lookups %}
-            <div class="col-auto">
-              <button type="submit" class="btn btn-{{ lookup.bg_class }} btn-sm p-0" name="delete_method_lookup" value="{{ lookup.key }}={{ lookup.value }}">
-                <span class="badge">
-                  {{ lookup.name }}={{ lookup.value }}
-                </span>
-              </button>
-            </div>
-          {% endfor %}
-          <div class="row">
-            <div class="col-12">
-              <hr>
-            </div>
-          </div>
+<div class="row mt-3">
+  <div class="col-12">
+    <h2>{{ verbose_name_plural }}</h2>
+  </div>
+  <form method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
+    {% if enabled_filter_form.enabled_lookups %}
+      <div class="row mt-3">
+        <div class="col-auto">
+          <span class="badge badge-light text-bg-light">
+            Filter entfernen:
+          </span>
         </div>
-      {% endif %}
-    </form>
-    <div class="row">
-      <div class="col-12">
-        <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#add-filter-form" aria-expanded="false" aria-controls="add-filter-form">
-          &#43; Filter hinzufügen
-        </button>
-        <div>
-          <div class="collapse" id="add-filter-form">
-            <div class="card card-body w-100">
-              <form id="add-filter-argument-form" method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
-                <table>
-                  {{ add_filter_form.as_table }}
-                  <tr>
-                    <td>
-                    </td>
-                    <td>
-                      <button class="btn btn-primary" type="submit">Filter hinzufügen</button>
-                      <button class="btn btn-secondary" type="reset">Zurücksetzen</button>
-                    </td>
-                  </tr>
-                </table>
-              </form>
-            </div>
+        {% for lookup in enabled_filter_form.enabled_lookups %}
+          <div class="col-auto">
+            <button type="submit" class="btn btn-{{ lookup.bg_class }} btn-sm p-0" name="delete_method_lookup" value="{{ lookup.key }}={{ lookup.value }}">
+              <span class="badge">
+                {{ lookup.name }}={{ lookup.value }}
+              </span>
+            </button>
+          </div>
+        {% endfor %}
+        <div class="row">
+          <div class="col-12">
+            <hr>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  {% if chart %}
+    {% endif %}
+  </form>
   <div class="row">
     <div class="col-12">
-      <hr>
-    </div>
-    <form id="group-by-form" method=GET action="{{ request.path }}?{{ request.GET.urlencode }}">
-      <div class="col-12">
-        <table>
-          {{ group_by_form.as_table }}
-        </table>
+      <button class="btn btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#add-filter-form" aria-expanded="false" aria-controls="add-filter-form">
+        &#43; Filter hinzufügen
+      </button>
+      <div>
+        <div class="collapse" id="add-filter-form">
+          <div class="card card-body w-100">
+            <form id="add-filter-argument-form" method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
+              <table>
+                {{ add_filter_form.as_table }}
+                <tr>
+                  <td>
+                  </td>
+                  <td>
+                    <button class="btn btn-primary" type="submit">Filter hinzufügen</button>
+                    <button class="btn btn-secondary" type="reset">Zurücksetzen</button>
+                  </td>
+                </tr>
+              </table>
+            </form>
+          </div>
+        </div>
       </div>
-    </form>
+    </div>
   </div>
-    <div class="row">
-      <div class="col-12">
-        {% include './chart.html' %}
-      </div>
-    </div>
+</div>
+{% if chart %}
+<div class="row">
+  <div class="col-12">
+    <hr>
+  </div>
+  <form id="group-by-form" method=GET action="{{ request.path }}?{{ request.GET.urlencode }}">
     <div class="col-12">
-      <hr>
+      <table>
+        {{ group_by_form.as_table }}
+      </table>
     </div>
-  {% endif %}
-  <div class="row mt-3">
-    <div class="col-12 table-responsive">
+  </form>
+</div>
+  <div class="row">
+    <div class="col-12">
+      {% include './chart.html' %}
+    </div>
+  </div>
+  <div class="col-12">
+    <hr>
+  </div>
+{% endif %}
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="table-responsive">
       {% include table %}{{ table_id }}
     </div>
   </div>
