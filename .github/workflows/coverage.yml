@@ -22,7 +22,12 @@ jobs:
           coverage xml
 
       - name: "Codecov"
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
-          fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: CodeClimate
+        uses: paambaati/codeclimate-action@v3.2.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          
