@@ -28,6 +28,7 @@ jobs:
     - name: Build package
       run: |
         echo $(git describe --abbrev=0 --tags) > VERSION
+        echo $(git describe --abbrev=0 --tags) > src/django_htmx_viewsets/VERSION
         python -m build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
