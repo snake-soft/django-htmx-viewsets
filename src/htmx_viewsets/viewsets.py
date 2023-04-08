@@ -116,6 +116,7 @@ class HtmxViewSet(HtmxViewSetBase):
 
 
 class HtmxModelViewSet(HtmxViewSet):
+    full_template_name = 'htmx_viewsets/full.html'
     url_paths = {
         'list': '',
         'detail': '<int:pk>/',
@@ -231,6 +232,7 @@ class HtmxModelViewSet(HtmxViewSet):
             'create_url': self.url_names.get('create', None),
             'verbose_name': self.model._meta.verbose_name,
             'verbose_name_plural': self.model._meta.verbose_name_plural,
+            'dispatch_template': f'htmx_viewsets/partial.html,{self.full_template_name}',
 
             'node_id': self.node_id,
             'chart': self.get_chart(qs, self.get_fields(qs)),

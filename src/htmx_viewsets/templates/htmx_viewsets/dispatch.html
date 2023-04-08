@@ -1,4 +1,4 @@
-{% extends request.htmx|yesno:'htmx_viewsets/partial.html,htmx_viewsets/full.html' %}
+{% extends request.htmx|yesno:dispatch_template %}
 
 
 {% block main %}
