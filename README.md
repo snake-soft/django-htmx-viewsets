@@ -44,7 +44,7 @@ Features
 
 Screenshot
 ------------------------
-[![django-htmx-viewsets_screenshot1](https://raw.githubusercontent.com/snake-soft/django-htmx-viewsets/master/docs/screenshot1.png)]
+![django-htmx-viewsets_screenshot1](https://raw.githubusercontent.com/snake-soft/django-htmx-viewsets/master/docs/screenshot1.png)
 
 Quick-Start
 ========================
