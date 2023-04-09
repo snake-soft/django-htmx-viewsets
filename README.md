@@ -81,10 +81,11 @@ urlpatterns = [
 ```
 
 
-Middleware
+Settings
 ------------------------
 ```python
 MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware']
+INSTALLED_APPS += ['django_htmx', 'htmx_viewsets']
 ```
 
 
