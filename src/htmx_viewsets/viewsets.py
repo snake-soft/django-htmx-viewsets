@@ -83,7 +83,7 @@ class HtmxViewSetBase(ABC):
 
     @classmethod
     def get_urls(cls):  # @NoSelf
-        return [view.url_path for view in cls.get_views()]
+        return ([view.url_path for view in cls.get_views()], cls.namespace)
 
     @classmethod
     def get_url_names(cls):
@@ -141,7 +141,6 @@ class HtmxModelViewSet(HtmxViewSet):
 
     filter_form_class: Optional[forms.Form] = FilterForm
     add_filter_form_class: Optional[forms.Form] = AddFilterForm
-    #add_filter_form_class: Optional[forms.Form] = AddFilterForm
     remove_filter_form_class: Optional[forms.Form] = RemoveFilterForm
     group_by_form_class: forms.Form = GroupByForm
 
@@ -190,10 +189,7 @@ class HtmxModelViewSet(HtmxViewSet):
         viewset_fields = self.get_fields(qs)
         lookups = []
         for field in viewset_fields:
-            field_lookups = field.get_lookups(only_groupable=only_groupable)
-            for name, verbose_name in field_lookups:
-                #bla =  qs.query.get_lookup(f'{field.name}__{name}')
-                lookups.append((f'{field.name}__{name}', verbose_name))
+            lookups += field.get_lookups(only_groupable=only_groupable)
         return lookups
 
     def get_group_by_lookups(self, qs):
@@ -265,10 +261,7 @@ class HtmxModelViewSet(HtmxViewSet):
         if qs.query.group_by == True:
             raise
         for expression in qs.query.group_by:
-            if isinstance(expression, Ref):
-                field = copy(expression.output_field)
-            else:
-                field = copy(expression.source_expressions[0].output_field)
+            field = copy(expression.output_field)
             name = self.group_by_form.cleaned_data['group_by']
             setattr(field, 'name', name)
             fields[name] = self.field_class(field, qs)
@@ -318,8 +311,9 @@ def modelviewset_factory(model=None, queryset=None, **kwargs):
         'model': model,
         'base_queryset': queryset,
         'node_id': model._meta.model_name,
-        'namespace': model.__module__.split('.')[0],
     })
+    if 'namespace' not in kwargs:
+        kwargs['namespace'] = f'{model._meta.model_name}_viewset'
     kwargs.update(kwargs)
     cls = type(cls.__name__, (cls,), kwargs)
     setattr(cls, 'url_names', cls.get_url_names())

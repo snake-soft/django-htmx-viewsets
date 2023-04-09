@@ -88,18 +88,26 @@ class ViewsetModelField:
         only_groupable: get only lookups that can be used in group by
         """
         lookups = []
+        verbose_name = self.model_field.verbose_name
+        if only_groupable:
+            lookups.append((
+                self.name,
+                verbose_name,
+            ))
         for name, lookup in self.model_field.get_lookups().items():
             is_groupable = issubclass(lookup, models.lookups.Transform)
-            verbose_name = self.model_field.verbose_name
             if not only_groupable or is_groupable:
-                lookups.append((name, f'{verbose_name}: {lookup.__name__}'))
+                lookups.append((
+                    f'{self.name}__{name}',
+                    f'{verbose_name}: {lookup.__name__}',
+                ))
             if hasattr(lookup, 'get_lookups'):
                 for sub_name, sub_lookup in lookup.get_lookups().items():
                     is_groupable = issubclass(sub_lookup, models.lookups.Transform)
                     if not only_groupable or is_groupable:
                         lookups.append((
-                            f'{name}__{sub_name}',
-                            f'{verbose_name}: {sub_lookup.__name__}'
+                            f'{self.name}__{name}__{sub_name}',
+                            f'{verbose_name}: {sub_lookup.__name__}',
                         ))
         return lookups
 
