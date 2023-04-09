@@ -74,7 +74,6 @@ MainViewSet = modelviewset_factory(queryset=Main.objects.all())
 urls.py
 ------------------------
 ```python
-app_name = 'test_db'
 urlpatterns = [
     path('main/', include(MainViewSet.urls)),
 ]
