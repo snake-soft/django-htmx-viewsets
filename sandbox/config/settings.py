@@ -1,6 +1,5 @@
 from .settings_original import *
 
-
 INSTALLED_APPS += ['django_htmx', 'htmx_viewsets', 'test_db', "debug_toolbar", 'django_extensions']
 
 MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware', "debug_toolbar.middleware.DebugToolbarMiddleware",]
@@ -15,4 +14,4 @@ _DB = {
     'PORT': 5432,
     }
 
-DATABASES = {'default': _DB}
+#DATABASES = {'default': _DB}

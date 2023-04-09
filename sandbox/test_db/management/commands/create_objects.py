@@ -3,7 +3,6 @@ import itertools
 from collections import Iterable, Callable
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from htmx_viewsets.helpers import timer
 from ...models import Parent, Tag, Main, Child, Attribute, AttributeValue
 
 
@@ -146,18 +145,15 @@ class Command(BaseCommand):
         return set(model_names)
 
     @classmethod
-    @timer
     def create_parents(cls, count):
         cls.create_n(Parent, count)
 
     @classmethod
-    @timer
     def create_mains(cls, parents, count):
         parents = parents.values_list('id', flat=True)
         cls.create_n(Main, count, parent_id=parents)
 
     @classmethod
-    @timer
     def create_tags(cls, count):
         cls.create_n(Tag, count)
 
@@ -173,7 +169,6 @@ class Command(BaseCommand):
                 yield value
 
     @classmethod
-    @timer
     def add_tags(cls, mains, tags, propability):
         model = Main.tags.through
         mains = mains.values_list('pk', flat=True)
@@ -185,7 +180,6 @@ class Command(BaseCommand):
         cls.create_from_generator(model, generator, CHUNK_SIZE)
 
     @classmethod
-    @timer
     def create_childs(cls, main_instances, count, propability):
         count = main_instances.count() * count
         main_ids = list(main_instances.values_list('pk', flat=True))
@@ -194,12 +188,10 @@ class Command(BaseCommand):
         cls.create_from_generator(Child, mains, CHUNK_SIZE)
 
     @classmethod
-    @timer
     def create_attributes(cls, count):
         cls.create_n(Attribute, count)
 
     @classmethod
-    @timer
     def add_attribute_values(cls, main_instances, attributes, propability):
         mains = main_instances.values_list('pk', flat=True).iterator()
         attributes = attributes.values_list('pk', flat=True).iterator()

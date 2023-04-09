@@ -6,7 +6,8 @@
 .env
 static_root/
 media/
-/tests/db.sqlite3
+db.sqlite3
+db.sqlite3-journal
 *.json
 *BAK*
 *.csv
