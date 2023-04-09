@@ -55,14 +55,12 @@ Quick-Start
 
 Installation
 ------------------------
-
 ```
 pip install django-htmx-viewset
 ```
 
 views.py
 ------------------------
-
 Create a ModelViewset by passing the model
 ```python
 MainViewSet = modelviewset_factory(model=Main)
@@ -75,7 +73,6 @@ MainViewSet = modelviewset_factory(queryset=Main.objects.all())
 
 urls.py
 ------------------------
-
 ```python
 app_name = 'test_db'
 urlpatterns = [
@@ -86,7 +83,6 @@ urlpatterns = [
 
 Middleware
 ------------------------
-
 ```python
 MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware']
 ```
@@ -117,9 +113,11 @@ htmx_viewsets_static_all can be splitted by using htmx_viewsets_static_js and ht
 htmx_viewsets_fixed_content can be splitted by using htmx_viewsets_modal and htmx_viewsets_messages.
 
 
-Development (Sandbox)
-------------------------
+Development
+========================
 
+Sandbox
+------------------------
 The sandbox has multiple models containing almost all oob Django fields and relations.
 Currently only BinaryField, FileField, FilePathField and ImageField are missing.
 
@@ -144,3 +142,26 @@ To create a smaller db use the command like this:
 # Create 100 of every object (Main, Parent, Child, Attribute and AttributeValues).
 # w is needed when using custom parameters to confirm writing to db.
 ```
+
+Status
+------------------------
+This project is currently under heavy development but the main architecture is finished.
+All described interfaces (-> Quick-Start) will be kept but there may be changes under the hood.
+
+Versioning
+------------------------
+We use [semver](https://semver.org/).
+
++ Major: Huge steps to make incompatible changes that change the documented behaviour 
++ Minor: Changes in undocumented functionalities
++ Micro: Patches to fix smaller problems without changing interfaces
+
+Code Style
+------------------------
++ [PEP-8](https://peps.python.org/pep-0008/)
++ Default line length of 80 chars
+
+Contribution
+------------------------
+Feel free to create a [pull request](https://github.com/snake-soft/django-htmx-viewsets/pulls).
+If you find any errors, please [create an issue here](https://github.com/snake-soft/django-htmx-viewsets/issues) with all neccessary details.
