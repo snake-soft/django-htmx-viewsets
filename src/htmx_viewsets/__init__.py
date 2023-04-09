@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
-from .table.table import Table
+from .viewsets import modelviewset_factory
+
+
+__all__ = ['__version__', 'modelviewset_factory']
 
 
 def get_version():
@@ -12,4 +15,3 @@ def get_version():
 
 
 __version__ = get_version()
-__all__ = ['Table']
