@@ -24,10 +24,13 @@ Built with
 Description
 ------------------------
 When working with Django REST framework you will stumble upon so called ViewSets.
-They allow you to combine a set of related Views without repeating.
+They allow you to combine a set of related Views without repeating yourself.
 This aproach has no counterpart in Django itself.
 
 Therefore I created this package.
+
+It comes to its full power in projects where you have to create basic CRUD with listing and chart for many models.
+Eg. you can use it for building a powerful statistics page for online shops.
 
 
 Features
