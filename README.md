@@ -85,7 +85,7 @@ Middleware
 ------------------------
 
 ```python
-MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware', "debug_toolbar.middleware.DebugToolbarMiddleware",]
+MIDDLEWARE += ['django_htmx.middleware.HtmxMiddleware']
 ```
 
 
@@ -112,3 +112,32 @@ The template should contain the following tags and blocks:
 htmx_viewsets_static_all can be splitted by using htmx_viewsets_static_js and htmx_viewsets_static_css.
 
 htmx_viewsets_fixed_content can be splitted by using htmx_viewsets_modal and htmx_viewsets_messages.
+
+
+Development (Sandbox)
+------------------------
+
+The sandbox has multiple models containing almost all oob Django fields and relations.
+Currently only BinaryField, FileField, FilePathField and ImageField are missing.
+
+```
+git clone git@github.com:snake-soft/django-htmx-viewsets.git
+cd django-htmx-viewsets
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install -e .[test]
+./manage.py migrate
+./manage.py runserver_plus
+# To create maaaany objects:
+./manage.py create_objects
+```
+
+The purpose of the 'create_objects'-command is to create a huge database to analyze the behavior in scenarios with a bigger amount of data.
+On a fast machine it takes about an hour to create the ~4gb database.
+To create a smaller db use the command like this:
+
+```
+./manage.py create_objects -c 100 -w
+# Create 100 of every object (Main, Parent, Child, Attribute and AttributeValues).
+# w is needed when using custom parameters to confirm writing to db.
+```
