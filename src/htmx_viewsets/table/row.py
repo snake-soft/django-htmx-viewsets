@@ -1,3 +1,4 @@
+from django.db.models.base import Model
 
 __all__ = ['Row']
 
@@ -14,6 +15,8 @@ class Row:
         return [column.cell_class(self, column) for column in columns]
 
     def get_actions(self, action_classes, url_names):
+        if isinstance(self.instance, dict):
+            return []
         return [cls(self, url_names) for cls in action_classes]
 
     @property
