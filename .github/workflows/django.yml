@@ -22,4 +22,4 @@ jobs:
         pip install .[test]
         pip install "django~=${{ matrix.django-version }}"
     - name: Run Tests
-      run: python tests/manage.py test
+      run: python manage.py test
