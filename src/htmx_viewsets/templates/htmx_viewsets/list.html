@@ -39,7 +39,7 @@
         <div class="collapse" id="add-filter-form">
           <div class="card card-body w-100">
             <form id="add-filter-argument-form" method="POST" action="{{ request.path }}?{{ request.GET.urlencode }}">{% csrf_token %}
-              <table>
+              <table class="w-100">
                 {{ add_filter_form.as_table }}
                 <tr>
                   <td>
@@ -86,6 +86,10 @@
     </div>
   </div>
 </div>
+<style>
+  #id_x__value{width: 100%;}
+  #add-filter-argument-form .select2-container{width: 100%!important;}
+</style>
 <script>
     htmx.onLoad(function() {
       $('.modal-close-button').on('click', function () {
