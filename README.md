@@ -67,7 +67,8 @@ MainViewSet = modelviewset_factory(model=Main)
 ```
 or a queryset
 ```python
-MainViewSet = modelviewset_factory(queryset=Main.objects.all())
+MainViewSet = modelviewset_factory(queryset=Main.objects.all(), permissions=[])
+# Remove permissions kwarg if you want to use django default model permissions for the views.
 ```
 
 
