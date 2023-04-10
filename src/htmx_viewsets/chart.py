@@ -21,7 +21,7 @@ DATASET_OPTIONS = {
 
 class Dataset(dict):
     def __init__(self, field, data):
-        self.field                  = field
+        self.field = field
         self.update({
             'type': 'line',
             'label': field.verbose_name or field.name.title(),
@@ -29,6 +29,7 @@ class Dataset(dict):
             'color': field.color,
             'borderColor': field.color,
             'backgroundColor': field.color,
+            'hidden': True,
         })
 
 
@@ -60,8 +61,8 @@ class ChartDatasets:
         return Dataset(field)
 
     def get_datasets(self):
-        for i, field in enumerate(self.data_fields):
-            data = (x[i] for x in self.values_list)
+        for field in self.data_fields:
+            data = (getattr(x, field.name) for x in self.values_list)
             yield Dataset(field, data)
 
     @property
@@ -73,8 +74,6 @@ class ChartDatasets:
 
 
 class ChartBase(ChartDatasets):
-    #label_field: Optional[str] = None
-    #data_fields: Optional[Iterable[str]] = None
     type = None  # May be set on subclass
     options = {
         'interaction': {

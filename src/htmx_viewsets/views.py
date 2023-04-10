@@ -56,9 +56,9 @@ class HtmxModelView(HtmxView, TemplateResponseMixin, ContextMixin):
 
     template_name:      str = 'htmx_viewsets/form.html'
     object:             models.Model
-    node_id     : str
-    viewset_class     : 'viewsets.HtmxViewSetBase'
-    viewset     : 'viewsets.HtmxViewSetBase'
+    node_id: str
+    viewset_class: 'viewsets.HtmxViewSetBase'
+    viewset: 'viewsets.HtmxViewSetBase'
     model: models.Model
     base_queryset: QuerySet
     queryset: QuerySet
@@ -73,6 +73,8 @@ class HtmxModelView(HtmxView, TemplateResponseMixin, ContextMixin):
         return ContextMixin.__new__(cls)
 
     def dispatch(self, request, *args, **kwargs):
+        if not self.has_permission():
+            return self.handle_no_permission()
         self.viewset = self.viewset_class(request)
         self.fields = self.get_fields()
         return super().dispatch(request, *args, **kwargs)

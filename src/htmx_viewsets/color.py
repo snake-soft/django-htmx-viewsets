@@ -595,6 +595,8 @@ class Colors:
         Color.RED1,
         Color.GREEN1,
         Color.BLUE,
+        Color.YELLOW1,
+        Color.BROWN,
     ]
     def __init__(self):
         self.code_colors = {}

@@ -21,7 +21,6 @@ from .fields import ViewsetModelField
 from .table import Table
 from .chart import MixedChart
 from . import views
-from django.db.models.expressions import Ref
 
 
 ADDITIONAL_LOOKUPS = {
@@ -50,7 +49,6 @@ ADDITIONAL_LOOKUPS = {
 
 
 NUMBER_AGGREGATES = {
-    'count':    Count,
     'avg':      Avg,
     'sum':      Sum,
     'min':      Min,
@@ -58,6 +56,7 @@ NUMBER_AGGREGATES = {
     'variance': Variance,
     'stddev':   StdDev,
 }
+
 
 AGGREGATES = {
     IntegerField: NUMBER_AGGREGATES,
@@ -80,6 +79,15 @@ class HtmxViewSetBase(ABC):
     master          : Optional = None
     base_template   : Optional[str] = 'htmx_viewsets/full.html'
     charts          : Iterable = []
+    permissions = {
+        'list':     ['{app_label}.view_{model_name}'],
+        'detail':   ['{app_label}.view_{model_name}'],
+        'create':   ['{app_label}.add_{model_name}'],
+        'update':   ['{app_label}.change_{model_name}'],
+        'delete':   ['{app_label}.delete_{model_name}'],
+        'table':    ['{app_label}.view_{model_name}'],
+        'chart':    ['{app_label}.view_{model_name}'],
+    }
 
     @classmethod
     def get_urls(cls):  # @NoSelf
@@ -97,10 +105,42 @@ class HtmxViewSetBase(ABC):
         return views
 
     @classmethod
-    def get_view(cls, code, view_class):
-        view_kwargs = {'viewset_class': cls}
-        new_view_class = type(view_class.__name__, (view_class,), view_kwargs)
+    def format_permission(cls, perm):
+        kwargs = {
+            'app_label': cls.model._meta.app_label,
+            'model_name': cls.model._meta.model_name,
+        }
+        return perm.format(**kwargs)
 
+    @classmethod
+    def get_permissions(cls, view_class):
+        if isinstance(cls.permissions, dict):
+            perms = cls.permissions[view_class.code]
+        else:
+            perms = cls.permissions
+
+        if isinstance(perms, Iterable):
+            perms = cls.permissions
+        else:
+            perms = [perms]
+
+        return [cls.format_permission(perm) for perm in perms]
+
+    @classmethod
+    def get_view(cls, code, view_class):
+        """
+        We need to load the Permission mixin here to avoid Apps not loaded error
+        """
+        from django.contrib.auth.mixins import PermissionRequiredMixin
+        view_kwargs = {
+            'viewset_class': cls,
+            'permission_required': cls.get_permissions(view_class),
+        }
+        new_view_class = type(
+            view_class.__name__,
+            (view_class, PermissionRequiredMixin),
+            view_kwargs
+        )
         url_path = cls.url_paths[code]
         url_name = cls.url_names[code].split(':')[-1]
         setattr(
@@ -155,6 +195,7 @@ class HtmxModelViewSet(HtmxViewSet):
     base_queryset: QuerySet
     prefetch_related: Iterable[str] = None
     select_related: Iterable[str] = None
+    aggregate_count_pk = True
 
     def __init__(self, request):
         self.request = request
@@ -179,6 +220,8 @@ class HtmxModelViewSet(HtmxViewSet):
         self.table = self.get_table(qs, self.viewset_fields)
 
     def annotate_aggregates(self, qs):
+        if self.aggregate_count_pk:
+            qs = qs.annotate(Count('pk'))
         for field in qs.query.get_meta().fields:
             aggregates = self.default_aggregates.get(field.__class__, {})
             for name, func in aggregates.items():
@@ -258,8 +301,6 @@ class HtmxModelViewSet(HtmxViewSet):
 
     def get_group_by_fields(self, qs):
         fields = OrderedDict()
-        if qs.query.group_by == True:
-            raise
         for expression in qs.query.group_by:
             field = copy(expression.output_field)
             name = self.group_by_form.cleaned_data['group_by']
@@ -301,16 +342,18 @@ class HtmxModelViewSet(HtmxViewSet):
             self.request, qs, fields, table_id, self.url_names)
 
 
-def modelviewset_factory(model=None, queryset=None, **kwargs):
-    cls = kwargs.get('viewset', HtmxModelViewSet)
+def modelviewset_factory(model=None, queryset=None, permissions=None, **kwargs):
+    cls = kwargs.get('viewset_class', HtmxModelViewSet)
     assert model or isinstance(queryset, QuerySet)
     model = model or queryset.model
     if not isinstance(queryset, QuerySet):
         queryset = model._default_manager.all()
+    perms = permissions if permissions is not None else cls.permissions
     kwargs.update({
         'model': model,
         'base_queryset': queryset,
         'node_id': model._meta.model_name,
+        'permissions': perms,
     })
     if 'namespace' not in kwargs:
         kwargs['namespace'] = f'{model._meta.model_name}_viewset'

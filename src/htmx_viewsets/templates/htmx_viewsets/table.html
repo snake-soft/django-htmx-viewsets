@@ -1,9 +1,6 @@
 <table id="{{ table.table_id|safe }}" class="{{ table.table_classes|safe }}" style="{{ table.styles|safe }}">
     <thead>
         <tr>
-          {% if False and table.row_action_classes %}
-            <th></th>
-          {% endif %}
           {% for column in table.columns %}
             <th style="color: {{ column.field.color }}">{{ column }}</th>
           {% endfor %}
