@@ -89,7 +89,7 @@ class ViewsetModelField:
         """
         lookups = []
         verbose_name = self.model_field.verbose_name
-        if only_groupable:
+        if only_groupable and not self.model_field.primary_key:
             lookups.append((
                 self.name,
                 verbose_name,
