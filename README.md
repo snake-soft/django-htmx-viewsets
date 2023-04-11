@@ -131,7 +131,7 @@ pip install -e .[test]
 ./manage.py migrate
 ./manage.py runserver_plus
 # To create maaaany objects:
-./manage.py create_objects
+./manage.py create_objects -w
 ```
 
 The purpose of the 'create_objects'-command is to create a huge database to analyze the behavior in scenarios with a bigger amount of data.
