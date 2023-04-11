@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: '3.9'
       - run: |
-          pip install .[test]
-          coverage run manage.py test
+          pip install -e .[test]
+          coverage run --source=src/ manage.py test
           coverage report --skip-empty --skip-covered -m
           coverage xml
 
