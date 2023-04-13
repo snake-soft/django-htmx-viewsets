@@ -41,8 +41,6 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     license='GPL3',
-    package_dir={'': 'src'},
-    packages=find_packages('src'),
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',
