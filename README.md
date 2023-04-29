@@ -7,7 +7,8 @@
 
 django-htmx-viewsets
 ========================
-Viewsets for Django using HTMX and DataTables
+Viewsets for Django using HTMX and DataTables.
+Currently in early state.
 
 
 Built with
@@ -44,6 +45,11 @@ Features
 + Customizable architecture[^1]
 
 [^1]: Things may change while in early state (<1.0.0)
+
+
+Demo
+------------------------
+[Live demo](https://www.snake-soft.com/django-htmx-viewsets/)
 
 
 Screenshot
@@ -135,7 +141,6 @@ pip install -e .[test]
 ```
 
 The purpose of the 'create_objects'-command is to create a huge database to analyze the behavior in scenarios with a bigger amount of data.
-On a fast machine it takes about an hour to create the ~4gb database.
 To create a smaller db use the command like this:
 
 ```
