@@ -56,7 +56,7 @@ Quick-Start
 Installation
 ------------------------
 ```
-pip install django-htmx-viewset
+pip install django-htmx-viewsets
 ```
 
 views.py
