@@ -2,5 +2,7 @@
 
 
 {% block main %}
+  <h1>{% block modal_title %}{% endblock modal_title %}</h1>
   {% block htmx_main %}{{block.super}}{% endblock %}
+  {% block modal_body %}{{block.super}}{% endblock %}
 {% endblock %}
