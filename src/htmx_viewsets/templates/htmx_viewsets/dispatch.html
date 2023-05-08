@@ -1,8 +1,17 @@
 {% extends request.htmx|yesno:dispatch_template %}
+{% load i18n %}
 
 
 {% block main %}
-  <h1>{% block modal_title %}{% endblock modal_title %}</h1>
-  {% block htmx_main %}{{block.super}}{% endblock %}
-  {% block modal_body %}{{block.super}}{% endblock %}
+  {% block htmx_main %}
+    <h1>{% block modal_title %}{% endblock modal_title %}</h1>
+    {% block modal_body %}{{block.super}}{% endblock %}
+    {{block.super}}
+    <div class="btn-group" role="group" aria-label="Basic example">
+      {% block modal_submit_button %}{% endblock modal_submit_button %}
+      {% if next_url %}
+        <a class="btn btn-secondary modal-close-button ml-3" href="{{ next_url }}">{% trans 'Abbrechen' %}</a>
+      {% endif %}
+    </div>
+  {% endblock %}
 {% endblock %}

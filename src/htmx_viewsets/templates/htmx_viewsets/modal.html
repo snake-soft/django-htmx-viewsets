@@ -1,3 +1,6 @@
+{% load i18n %}
+
+
 <div id="modal-content" hx-swap="innerHTML" hx-swap-oob=true class="modal-content">
   {% block modal_content %}
     <div id="modal-header" class="modal-header">
@@ -23,7 +26,7 @@
       {% block modal_footer %}
         {{ modal_footer }}
         {% block modal_submit_button %}{% endblock modal_submit_button %}
-        <button type="button" class="btn btn-secondary modal-close-button" data-dismiss="modal">Schließen</button>
+        <button type="button" class="btn btn-secondary modal-close-button" data-dismiss="modal">{% trans 'Schließen' %}</button>
       {% endblock modal_footer %}
     </div>
   {% endblock modal_content %}
