@@ -34,6 +34,7 @@ build_require = [
 
 setup(
     name='django-htmx-viewsets',
+    url='https://github.com/snake-soft/django-htmx-viewsets',
     version=version,
     author="Snake-Soft",
     author_email="info@snake-soft.com",
