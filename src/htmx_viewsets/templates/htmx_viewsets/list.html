@@ -1,4 +1,5 @@
 {% extends './dispatch.html' %}
+{% load i18n %}
 
 {% block htmx_main %}
 <div class="row mt-3">
@@ -80,6 +81,9 @@
   </div>
 {% endif %}
 <div class="row mt-3">
+  <div class="col-12 mb-3">
+    <button type="button" class="btn btn-link text-decoration-none" hx-get="{% url create_url %}" hx-swap="none">&#43; {% trans 'Erstelle' %} {{ verbose_name }}</button>
+  </div>
   <div class="col-12">
     <div class="table-responsive">
       {% include table %}{{ table_id }}
